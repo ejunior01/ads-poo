@@ -113,7 +113,7 @@ public class ViewCliente extends JFrame {
         lbEscolaridade.setFont(fontePadrao);
 
         // cbEscolaridade
-        cbEscolaridade = new JComboBox<Escolaridade>(Escolaridade.values());
+        cbEscolaridade = new JComboBox<>(Escolaridade.values());
         cbEscolaridade.setBounds(100, 90, 170, 25);
         cbEscolaridade.setFont(fontePadrao);
         cbEscolaridade.setSelectedIndex(-1);
@@ -124,7 +124,7 @@ public class ViewCliente extends JFrame {
         lbEstadoCivil.setFont(fontePadrao);
 
         // cbEstadoCivil
-        cbEstadoCivil = new JComboBox<EstadoCivil>(EstadoCivil.values());
+        cbEstadoCivil = new JComboBox<>(EstadoCivil.values());
         cbEstadoCivil.setBounds(100, 125, 170, 25);
         cbEstadoCivil.setFont(fontePadrao);
         cbEstadoCivil.setSelectedIndex(-1);
@@ -180,9 +180,7 @@ public class ViewCliente extends JFrame {
     // neste método definiremos os comportamentos
     private void actions() {
 
-        btSalvar.addActionListener( p -> {
-            System.out.println("Clicou no botão");
-        });
+        btSalvar.addActionListener( p -> System.out.println("Clicou no botão"));
 
         tfCpf.addKeyListener(new KeyAdapter() {
             @Override

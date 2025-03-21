@@ -6,12 +6,12 @@ public enum Escolaridade {
 	GRADUACAO("Graduação"),
 	POS("Pós");
 
-	private Escolaridade(String rotulo) {this.rotulo = rotulo;}
+	Escolaridade(String rotulo) {this.rotulo = rotulo;}
 
 	@Override
 	public String toString() {
 		return this.rotulo;
 	}
 
-	private String rotulo;
+	private final String rotulo;
 }

@@ -7,11 +7,11 @@ public enum EstadoCivil {
     UNIAO_ESTAVEL("União estavél"),
     VIUVO("Viuvo");
 
-    private EstadoCivil(String rotulo) {
+    EstadoCivil(String rotulo) {
         this.rotulo = rotulo;
     }
 
-    private String rotulo;
+    private final String rotulo;
 
 
     @Override
