@@ -2,14 +2,16 @@ package br.senac.sp.livraria.view;
 
 import br.senac.sp.livraria.enumeration.Escolaridade;
 import br.senac.sp.livraria.enumeration.EstadoCivil;
+import br.senac.sp.livraria.model.Cliente;
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class ViewCliente extends JFrame {
     JLabel lbId, lbCpf, lbNome, lbNascimento, lbTelefone, lbEmail,
@@ -22,6 +24,7 @@ public class ViewCliente extends JFrame {
     JComboBox<Escolaridade> cbEscolaridade;
     JComboBox<EstadoCivil> cbEstadoCivil;
     JButton btSalvar;
+    Cliente cliente;
 
     public ViewCliente() {
         initComponents();
@@ -177,20 +180,75 @@ public class ViewCliente extends JFrame {
 
     }
 
-    // neste método definiremos os comportamentos
     private void actions() {
 
-        btSalvar.addActionListener( p -> System.out.println("Clicou no botão"));
+        btSalvar.addActionListener(p -> {
+            if (this.validateFormFields()) {
+                Calendar dtNascimento = Calendar.getInstance();
+                SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+
+                try {
+                    dtNascimento.setTime(fmt.parse(tfNascimento.getText()));
+                } catch (ParseException e) {
+                    JOptionPane.showMessageDialog(this, "Erro ao converter a data", "Erro", JOptionPane.WARNING_MESSAGE);
+                }
+
+                cliente = new Cliente(1,
+                        tfNome.getText(),
+                        tfCpf.getText(),
+                        dtNascimento,
+                        tfTelefone.getText(),
+                        tfEmail.getText(),
+                        taEndereco.getText(),
+                        (EstadoCivil) cbEstadoCivil.getSelectedItem(),
+                        (Escolaridade) cbEscolaridade.getSelectedItem());
+            }
+        });
 
         tfCpf.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
-                if(Character.isDigit(e.getKeyChar()) || tfEmail.getText().length() == 11) {
+                if (!Character.isDigit(e.getKeyChar()) || tfCpf.getText().length() > 11) {
                     e.consume();
                 }
-                System.out.println("Clicou no botão");
             }
         });
     }
 
+
+    private boolean validateFormFields() {
+
+        if (tfNome.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Informe o nome", "Erro", JOptionPane.WARNING_MESSAGE);
+            tfNome.requestFocus();
+            return false;
+        }
+        if (tfCpf.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Informe o CPF", "Erro", JOptionPane.WARNING_MESSAGE);
+            tfCpf.requestFocus();
+            return false;
+        }
+        if (tfEmail.getText().length() != 11) {
+            JOptionPane.showMessageDialog(this, "Informe o Email", "Erro", JOptionPane.WARNING_MESSAGE);
+            tfEmail.requestFocus();
+            return false;
+        }
+        if (tfNascimento.getValue() == null) {
+            JOptionPane.showMessageDialog(this, "Informe a Data de nascimento", "Erro", JOptionPane.WARNING_MESSAGE);
+            tfNascimento.requestFocus();
+            return false;
+        }
+        if (cbEscolaridade.getSelectedItem() == null) {
+            JOptionPane.showMessageDialog(this, "Informe a escolaridade", "Erro", JOptionPane.WARNING_MESSAGE);
+            cbEscolaridade.requestFocus();
+            return false;
+        }
+        if (cbEstadoCivil.getSelectedItem() == null) {
+            JOptionPane.showMessageDialog(this, "Informe o Estado civil", "Erro", JOptionPane.WARNING_MESSAGE);
+            cbEstadoCivil.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
 }
