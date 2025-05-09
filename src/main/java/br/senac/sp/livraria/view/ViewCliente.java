@@ -1,21 +1,31 @@
 package br.senac.sp.livraria.view;
 
+import br.senac.sp.livraria.dao.ClienteDao;
+import br.senac.sp.livraria.dao.ConnectionFactory;
+import br.senac.sp.livraria.dao.InterfaceDao;
 import br.senac.sp.livraria.enumeration.Escolaridade;
 import br.senac.sp.livraria.enumeration.EstadoCivil;
 import br.senac.sp.livraria.model.Cliente;
+import br.senac.sp.livraria.tablemodel.ClienteTableModel;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
-public class ViewCliente extends JFrame {
-    JLabel lbId, lbCpf, lbNome, lbNascimento, lbTelefone, lbEmail,
-            lbEndereco, lbEstadoCivil, lbEscolaridade;
+public class ViewCliente extends JFrame implements ActionListener {
+    JLabel lbId, lbCpf, lbNome, lbNascimento, lbTelefone, lbEmail, lbEndereco, lbEstadoCivil, lbEscolaridade;
     JTextField tfId, tfCpf, tfNome, tfTelefone, tfEmail;
     JFormattedTextField tfNascimento;
     MaskFormatter mskNascimento;
@@ -25,8 +35,27 @@ public class ViewCliente extends JFrame {
     JComboBox<EstadoCivil> cbEstadoCivil;
     JButton btSalvar;
     Cliente cliente;
+    Connection conexao;
+    InterfaceDao<Cliente> daoCliente;
+    JTable tbClientes;
+    JScrollPane spClientes;
+    List<Cliente> clientes;
+    ClienteTableModel modeCliente;
+    JButton btExcluir;
+    JLabel lbPesquisaNome;
+    JTextField tfPesquisaNome;
+    JButton btBuscar;
 
     public ViewCliente() {
+        try {
+            conexao = ConnectionFactory.getConexao();
+            daoCliente = new ClienteDao(conexao);
+            clientes = daoCliente.listar();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+
         initComponents();
         actions();
     }
@@ -116,7 +145,7 @@ public class ViewCliente extends JFrame {
         lbEscolaridade.setFont(fontePadrao);
 
         // cbEscolaridade
-        cbEscolaridade = new JComboBox<>(Escolaridade.values());
+        cbEscolaridade = new JComboBox<Escolaridade>(Escolaridade.values());
         cbEscolaridade.setBounds(100, 90, 170, 25);
         cbEscolaridade.setFont(fontePadrao);
         cbEscolaridade.setSelectedIndex(-1);
@@ -127,7 +156,7 @@ public class ViewCliente extends JFrame {
         lbEstadoCivil.setFont(fontePadrao);
 
         // cbEstadoCivil
-        cbEstadoCivil = new JComboBox<>(EstadoCivil.values());
+        cbEstadoCivil = new JComboBox<EstadoCivil>(EstadoCivil.values());
         cbEstadoCivil.setBounds(100, 125, 170, 25);
         cbEstadoCivil.setFont(fontePadrao);
         cbEstadoCivil.setSelectedIndex(-1);
@@ -137,16 +166,40 @@ public class ViewCliente extends JFrame {
         lbEndereco.setBounds(280, 90, 60, 25);
         lbEndereco.setFont(fontePadrao);
 
-        //taEndereco
+        // taEndereco
         taEndereco = new JTextArea();
         taEndereco.setBounds(350, 90, 280, 60);
         taEndereco.setFont(fontePadrao);
 
-
+        // btSalvar
         btSalvar = new JButton("Salvar");
-        btSalvar.setBounds(20, 200, 100, 36);
+        btSalvar.setBounds(20, 160, 80, 25);
         btSalvar.setFont(fontePadrao);
+        btSalvar.setMnemonic('a');
 
+        // btExcluir
+        btExcluir = new JButton("Excluir");
+        btExcluir.setBounds(105, 160, 80, 25);
+        btExcluir.setFont(fontePadrao);
+        btExcluir.setMnemonic('a');
+
+        // lbNome
+        btBuscar = new JButton("Pesquisar: ");
+        btBuscar.setBounds(200, 160, 150, 25);
+        btBuscar.setFont(fontePadrao);
+
+        // tfNome
+        tfPesquisaNome = new JTextField();
+        tfPesquisaNome.setBounds(260, 160, 250, 25);
+        tfPesquisaNome.setFont(fontePadrao);
+
+        modeCliente = new ClienteTableModel(clientes);
+
+        tbClientes = new JTable(modeCliente);
+        tbClientes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        spClientes = new JScrollPane(tbClientes);
+        spClientes.setBounds(20, 195, 610, 250);
 
         // adicionar componentes
         Container base = getContentPane();
@@ -171,6 +224,10 @@ public class ViewCliente extends JFrame {
         base.add(lbEndereco);
         base.add(taEndereco);
         base.add(btSalvar);
+        base.add(btExcluir);
+        base.add(btBuscar);
+        base.add(tfPesquisaNome);
+        base.add(spClientes);
 
         // parâmetros do frame
         setSize(670, 500);
@@ -180,75 +237,170 @@ public class ViewCliente extends JFrame {
 
     }
 
-    private void actions() {
+    private void actionExcluir() {
+        btExcluir.addActionListener(e -> {
+            if (cliente == null) {
+                JOptionPane.showMessageDialog(this, "Selecione um cliente para excluí-lo", "Aviso", JOptionPane.WARNING_MESSAGE);
+            } else {
 
-        btSalvar.addActionListener(p -> {
-            if (this.validateFormFields()) {
-                Calendar dtNascimento = Calendar.getInstance();
-                SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+                int resposta = JOptionPane.showConfirmDialog(this, "Deseja excluir o cliente: " + cliente.getNome() + " ?", "Confirmar exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
-                try {
-                    dtNascimento.setTime(fmt.parse(tfNascimento.getText()));
-                } catch (ParseException e) {
-                    JOptionPane.showMessageDialog(this, "Erro ao converter a data", "Erro", JOptionPane.WARNING_MESSAGE);
+                if (resposta == JOptionPane.YES_OPTION) {
+                    try {
+                        daoCliente.excluir(cliente.getId());
+                        clientes = daoCliente.listar();
+                        modeCliente.setLista(clientes);
+                        modeCliente.fireTableDataChanged();
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
 
-                cliente = new Cliente(1,
-                        tfNome.getText(),
-                        tfCpf.getText(),
-                        dtNascimento,
-                        tfTelefone.getText(),
-                        tfEmail.getText(),
-                        taEndereco.getText(),
-                        (EstadoCivil) cbEstadoCivil.getSelectedItem(),
-                        (Escolaridade) cbEscolaridade.getSelectedItem());
+
+            }
+        });
+    }
+
+    private void actionSalvar() {
+        // ação do botão salvar usando expressão lambda
+        btSalvar.addActionListener(e -> {
+            // validar os campos
+            if (tfNome.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog
+                        (this, "Informe o nome", "Erro", JOptionPane.WARNING_MESSAGE);
+                tfNome.requestFocus();
+            } else if (tfCpf.getText().isEmpty() || tfCpf.getText().length() != 11) {
+                JOptionPane.showMessageDialog
+                        (this, "Informe o cpf", "Erro", JOptionPane.WARNING_MESSAGE);
+                tfCpf.requestFocus();
+            } else if (tfNascimento.getValue() == null) {
+                JOptionPane.showMessageDialog
+                        (this, "Informe a data de nascimento", "Erro", JOptionPane.WARNING_MESSAGE);
+                tfNascimento.requestFocus();
+            } else if (cbEscolaridade.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog
+                        (this, "Informe a escolaridade", "Erro", JOptionPane.WARNING_MESSAGE);
+                cbEscolaridade.requestFocus();
+            } else if (cbEstadoCivil.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog
+                        (this, "Informe o estado civil", "Erro", JOptionPane.WARNING_MESSAGE);
+                cbEstadoCivil.requestFocus();
+            } else {
+                if (cliente == null) {
+                    cliente = new Cliente();
+                }
+                cliente.setNome(tfNome.getText());
+                cliente.setCpf(tfCpf.getText());
+                // conversão da String para data
+                Calendar dataNasc = Calendar.getInstance();
+                SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+                try {
+                    dataNasc.setTime(fmt.parse(tfNascimento.getText()));
+                } catch (Exception e2) {
+                    JOptionPane.showMessageDialog(this, "Erro ao converter a data");
+                }
+                cliente.setNascimento(dataNasc);
+                cliente.setTelefone(tfTelefone.getText());
+                cliente.setEmail(tfEmail.getText());
+                cliente.setEscolaridade((Escolaridade) cbEscolaridade.getSelectedItem());
+                cliente.setEstadoCivil((EstadoCivil) cbEstadoCivil.getSelectedItem());
+                cliente.setEndereco(taEndereco.getText());
+
+                // inserir no banco
+                try {
+                    if (cliente.getId() == 0) {
+                        daoCliente.inserir(cliente);
+
+                    } else {
+                        daoCliente.alterar(cliente);
+                    }
+                    clientes = daoCliente.listar();
+                    modeCliente.setLista(clientes);
+                    modeCliente.fireTableDataChanged();
+                    limpar();
+
+                } catch (SQLException e1) {
+                    JOptionPane.showMessageDialog(ViewCliente.this, "Erro ao inserir: " + e1.getMessage(),
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    e1.printStackTrace();
+                }
             }
         });
 
+    }
+
+    private void actionBuscar() {
+        btBuscar.addActionListener(e -> {
+            if (!tfPesquisaNome.getText().isEmpty()) {
+                String nomePesquisa = tfPesquisaNome.getText();
+                try {
+                    clientes = daoCliente.listarPorNome(nomePesquisa);
+                    modeCliente.setLista(clientes);
+                    modeCliente.fireTableDataChanged();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+
+        });
+    }
+
+    // neste método definiremos os comportamentos
+    private void actions() {
+
+        this.actionSalvar();
+        this.actionExcluir();
+        this.actionBuscar();
+
+        // permitir somente números na tfCpf
         tfCpf.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
-                if (!Character.isDigit(e.getKeyChar()) || tfCpf.getText().length() > 11) {
+                if (!Character.isDigit(e.getKeyChar()) || tfCpf.getText().length() == 11) {
                     e.consume();
                 }
             }
         });
+
+        tbClientes.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                int linha = tbClientes.getSelectedRow();
+                if (linha >= 0) {
+                    cliente = clientes.get(linha);
+                    tfId.setText(cliente.getId() + "");
+                    tfNome.setText(cliente.getNome());
+                    tfCpf.setText(cliente.getCpf());
+                    tfTelefone.setText(cliente.getTelefone());
+                    tfEmail.setText(cliente.getEmail());
+                    cbEscolaridade.setSelectedItem(cliente.getEscolaridade());
+                    cbEstadoCivil.setSelectedItem(cliente.getEstadoCivil());
+                    taEndereco.setText(cliente.getEndereco());
+                    SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+                    tfNascimento.setValue(fmt.format(cliente.getNascimento().getTime()));
+
+                }
+            }
+        });
     }
 
-
-    private boolean validateFormFields() {
-
-        if (tfNome.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Informe o nome", "Erro", JOptionPane.WARNING_MESSAGE);
-            tfNome.requestFocus();
-            return false;
-        }
-        if (tfCpf.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Informe o CPF", "Erro", JOptionPane.WARNING_MESSAGE);
-            tfCpf.requestFocus();
-            return false;
-        }
-        if (tfEmail.getText().length() != 11) {
-            JOptionPane.showMessageDialog(this, "Informe o Email", "Erro", JOptionPane.WARNING_MESSAGE);
-            tfEmail.requestFocus();
-            return false;
-        }
-        if (tfNascimento.getValue() == null) {
-            JOptionPane.showMessageDialog(this, "Informe a Data de nascimento", "Erro", JOptionPane.WARNING_MESSAGE);
-            tfNascimento.requestFocus();
-            return false;
-        }
-        if (cbEscolaridade.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Informe a escolaridade", "Erro", JOptionPane.WARNING_MESSAGE);
-            cbEscolaridade.requestFocus();
-            return false;
-        }
-        if (cbEstadoCivil.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Informe o Estado civil", "Erro", JOptionPane.WARNING_MESSAGE);
-            cbEstadoCivil.requestFocus();
-            return false;
-        }
-
-        return true;
+    private void limpar() {
+        cliente = null;
+        tfId.setText(null);
+        tfNome.setText(null);
+        tfCpf.setText(null);
+        tfNascimento.setValue(null);
+        tfTelefone.setText(null);
+        tfEmail.setText(null);
+        cbEscolaridade.setSelectedIndex(-1);
+        cbEstadoCivil.setSelectedIndex(-1);
+        taEndereco.setText(null);
+        tfNome.requestFocus();
     }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        System.out.println("Clicou no botão 1ª vez");
+    }
+
 }

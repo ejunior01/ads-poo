@@ -16,6 +16,9 @@ public class Cliente {
     private EstadoCivil estadoCivil;
     private Escolaridade escolaridade;
 
+    public Cliente() {
+    }
+
     public Cliente(int id, String nome, String cpf, Calendar nascimento, String telefone, String email, String endereco, EstadoCivil estadoCivil, Escolaridade escolaridade) {
         this.id = id;
         this.cpf = cpf;
