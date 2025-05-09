@@ -1,7 +1,7 @@
 package br.senac.sp.livraria.view;
 
-import br.senac.sp.livraria.dao.ClienteDao;
-import br.senac.sp.livraria.dao.ConnectionFactory;
+import br.senac.sp.livraria.dao.ClienteJpaDao;
+import br.senac.sp.livraria.dao.EmFactory;
 import br.senac.sp.livraria.dao.InterfaceDao;
 import br.senac.sp.livraria.enumeration.Escolaridade;
 import br.senac.sp.livraria.enumeration.EstadoCivil;
@@ -45,11 +45,12 @@ public class ViewCliente extends JFrame implements ActionListener {
     JLabel lbPesquisaNome;
     JTextField tfPesquisaNome;
     JButton btBuscar;
+    JButton btLimparBuscar;
 
     public ViewCliente() {
         try {
-            conexao = ConnectionFactory.getConexao();
-            daoCliente = new ClienteDao(conexao);
+//            conexao = ConnectionFactory.getConexao();
+            daoCliente = new ClienteJpaDao(EmFactory.getEntityManager());
             clientes = daoCliente.listar();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -184,14 +185,18 @@ public class ViewCliente extends JFrame implements ActionListener {
         btExcluir.setMnemonic('a');
 
         // lbNome
-        btBuscar = new JButton("Pesquisar: ");
-        btBuscar.setBounds(200, 160, 150, 25);
+        btBuscar = new JButton("Pesquisar");
+        btBuscar.setBounds(190, 160, 100, 25);
         btBuscar.setFont(fontePadrao);
 
         // tfNome
         tfPesquisaNome = new JTextField();
-        tfPesquisaNome.setBounds(260, 160, 250, 25);
+        tfPesquisaNome.setBounds(300, 160, 200, 25);
         tfPesquisaNome.setFont(fontePadrao);
+
+        btLimparBuscar = new JButton("Limpar");
+        btLimparBuscar.setBounds(510, 160, 100, 25);
+        btLimparBuscar.setFont(fontePadrao);
 
         modeCliente = new ClienteTableModel(clientes);
 
@@ -228,6 +233,7 @@ public class ViewCliente extends JFrame implements ActionListener {
         base.add(btBuscar);
         base.add(tfPesquisaNome);
         base.add(spClientes);
+        base.add(btLimparBuscar);
 
         // parâmetros do frame
         setSize(670, 500);
@@ -345,12 +351,28 @@ public class ViewCliente extends JFrame implements ActionListener {
         });
     }
 
+
+    private void actionLimparBuscar() {
+        btLimparBuscar.addActionListener(e -> {
+            tfPesquisaNome.setText("");
+            try {
+                clientes = daoCliente.listar();
+                modeCliente.setLista(clientes);
+                modeCliente.fireTableDataChanged();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+
+        });
+    }
+
     // neste método definiremos os comportamentos
     private void actions() {
 
         this.actionSalvar();
         this.actionExcluir();
         this.actionBuscar();
+        this.actionLimparBuscar();
 
         // permitir somente números na tfCpf
         tfCpf.addKeyListener(new KeyAdapter() {
