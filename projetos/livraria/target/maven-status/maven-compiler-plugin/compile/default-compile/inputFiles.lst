@@ -1,0 +1,10 @@
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/dao/ClienteDao.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/dao/ClienteJpaDao.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/dao/ConnectionFactory.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/dao/EmFactory.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/dao/InterfaceDao.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/enumeration/Escolaridade.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/enumeration/EstadoCivil.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/model/Cliente.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/tablemodel/ClienteTableModel.java
+/workspaces/ads-poo/src/main/java/br/senac/sp/livraria/view/ViewCliente.java

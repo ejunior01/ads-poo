@@ -1,0 +1,12 @@
+br/senac/sp/livraria/dao/ClienteJpaDao.class
+br/senac/sp/livraria/enumeration/Escolaridade.class
+br/senac/sp/livraria/dao/EmFactory.class
+br/senac/sp/livraria/model/Cliente.class
+br/senac/sp/livraria/view/ViewCliente$2.class
+br/senac/sp/livraria/tablemodel/ClienteTableModel.class
+br/senac/sp/livraria/dao/ConnectionFactory.class
+br/senac/sp/livraria/enumeration/EstadoCivil.class
+br/senac/sp/livraria/view/ViewCliente$1.class
+br/senac/sp/livraria/view/ViewCliente.class
+br/senac/sp/livraria/dao/ClienteDao.class
+br/senac/sp/livraria/dao/InterfaceDao.class
